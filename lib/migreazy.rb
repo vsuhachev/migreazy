@@ -2,7 +2,7 @@ require 'rugged'
 
 module Migreazy
   @@db_connected = false
-  
+
   def self.ensure_db_connection
     unless @@db_connected
       db_config = YAML::load(IO.read("./config/database.yml"))
@@ -34,7 +34,7 @@ module Migreazy
         @source2 = Source.new_from_command_line_arg(args.last)
       end
     end
-  
+
     class Diff < Action
       def run
         left_only = (@source1.migrations - @source2.migrations).sort.reverse
@@ -51,14 +51,14 @@ module Migreazy
           )
           until (left_only.empty? && right_only.empty?)
             side = if right_only.empty?
-              :left
-            elsif left_only.empty?
-              :right
-            elsif left_only.first > right_only.first
-              :left
-            else
-              :right
-            end
+                     :left
+                   elsif left_only.empty?
+                     :right
+                   elsif left_only.first > right_only.first
+                     :left
+                   else
+                     :right
+                   end
             if side == :left
               puts sprintf("%-39s", left_only.first.to_s)
               left_only.shift
@@ -70,7 +70,7 @@ module Migreazy
         end
       end
     end
-    
+
     class Down < Action
       def run
         missing_in_branch = @source1.migrations - @source2.migrations
@@ -86,13 +86,13 @@ module Migreazy
         end
       end
     end
-    
+
     class Find < Action
       def initialize(args)
         @args = args
         @migration_number = args.first
       end
-      
+
       def run
         repo = Rugged::Repository.new '.'
         local_branches = repo.branches.each_name(:local).sort
@@ -100,11 +100,11 @@ module Migreazy
           Migreazy.migration_numbers(branch_name).include?(@migration_number)
         }
         puts "Migration #{@migration_number} found in " +
-             matching_branches.join(', ')
+          matching_branches.join(', ')
       end
     end
   end
-  
+
   class Source
     def self.new_from_command_line_arg(arg)
       if File.exist?(File.expand_path(arg))
@@ -113,9 +113,9 @@ module Migreazy
         GitBranch.new arg
       end
     end
-    
+
     attr_reader :migrations
-  
+
     class Database < Source
       def initialize
         Migreazy.ensure_db_connection
@@ -123,23 +123,23 @@ module Migreazy
           "select version from schema_migrations"
         ).map { |hash| hash['version'] }
       end
-      
+
       def description
         "Development DB"
       end
     end
-    
+
     class GitBranch < Source
       def initialize(git_branch_name)
         @git_branch_name = git_branch_name
         @migrations = Migreazy.migration_numbers(git_branch_name)
       end
-      
+
       def description
         "Branch #{@git_branch_name}"
       end
     end
-    
+
     class TextFile < Source
       def initialize(file)
         @file = File.expand_path(file)
@@ -151,12 +151,12 @@ module Migreazy
           end
         end
       end
-      
+
       def description
         "File #{@file}"
       end
     end
-    
+
     class WorkingCopy < Source
       def initialize
         @migrations = Dir.entries("./db/migrate").select { |entry|
@@ -165,7 +165,7 @@ module Migreazy
           entry.gsub(/^0*(\d+)_.*/, '\1')
         }
       end
-      
+
       def description
         "Working copy"
       end
