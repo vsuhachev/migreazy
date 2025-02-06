@@ -1,3 +1,4 @@
+require 'erb'
 require 'rugged'
 
 module Migreazy
@@ -5,7 +6,8 @@ module Migreazy
 
   def self.ensure_db_connection
     unless @@db_connected
-      db_config = YAML::load(IO.read("./config/database.yml"))
+      yaml = ERB.new(IO.read('./config/database.yml')).result(binding)
+      db_config = YAML::safe_load(yaml, aliases: true)
       ActiveRecord::Base.establish_connection db_config['development']
       @@db_connected = true
     end
